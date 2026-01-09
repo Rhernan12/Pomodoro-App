@@ -52,9 +52,15 @@ export default function SettingsCard() {
             />
           </div>
 
-          <div className="col-12">
+          <div className="col-4">
             <button type="button" className="button">
               Restore Defaults
+            </button>
+          </div>
+
+          <div className="col-4">
+            <button type="submit" className="button primary">
+              Apply Settings
             </button>
           </div>
         </div>

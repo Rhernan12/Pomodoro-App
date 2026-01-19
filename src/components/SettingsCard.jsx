@@ -1,19 +1,64 @@
-export default function SettingsCard() {
+import { useEffect, useState } from "react";
+
+export default function SettingsCard({ settings, defaults, onApplySettings }) {
+  const [draft, setDraft] = useState(settings);
+
+  useEffect(() => setDraft(settings), [settings]); // Just in case more functionality is added later
+
+  const updateField = (key) => {
+    return (e) => {
+      let digits = e.target.value.replace(/\D/g, "");
+      if (digits === "") {
+        digits = "0";
+      }
+      digits = digits.replace(/^0+(?=\d)/, "");
+      setDraft((prev) => ({ ...prev, [key]: digits }));
+    };
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const focusMinutes = parseInt(draft.focusMinutes, 10);
+    const shortBreakMinutes = parseInt(draft.shortBreakMinutes, 10);
+    const longBreakMinutes = parseInt(draft.longBreakMinutes, 10);
+    const sessionsBeforeLong = parseInt(draft.sessionsBeforeLong, 10);
+
+    const valuesArray = [
+      focusMinutes,
+      shortBreakMinutes,
+      longBreakMinutes,
+      sessionsBeforeLong,
+    ];
+    // Make sure no value is zero
+    if (!valuesArray.every((value) => value > 0)) {
+      alert("Values should be grater than 0.");
+    } else {
+      onApplySettings({
+        focusMinutes: focusMinutes,
+        shortBreakMinutes: shortBreakMinutes,
+        longBreakMinutes: longBreakMinutes,
+        sessionsBeforeLong: sessionsBeforeLong,
+      });
+    }
+  };
+
   return (
     <section className="main" id="settings" style={{ paddingTop: 0 }}>
       <header className="major">
         <h2>Settings</h2>
       </header>
 
-      <form>
+      <form onSubmit={handleSubmit}>
         <div className="row gtr-uniform">
           <div className="col-4">
             <label htmlFor="focusMinutes">Focus (minutes)</label>
             <input
               id="focusMinutes"
-              type="number"
-              min="1"
-              defaultValue="25"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={draft.focusMinutes}
+              onChange={updateField("focusMinutes")}
               style={{ width: "100%" }}
             />
           </div>
@@ -22,9 +67,11 @@ export default function SettingsCard() {
             <label htmlFor="shortBreakMinutes">Short break</label>
             <input
               id="shortBreakMinutes"
-              type="number"
-              min="1"
-              defaultValue="5"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={draft.shortBreakMinutes}
+              onChange={updateField("shortBreakMinutes")}
               style={{ width: "100%" }}
             />
           </div>
@@ -33,9 +80,11 @@ export default function SettingsCard() {
             <label htmlFor="longBreakMinutes">Long break</label>
             <input
               id="longBreakMinutes"
-              type="number"
-              min="1"
-              defaultValue="15"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={draft.longBreakMinutes}
+              onChange={updateField("longBreakMinutes")}
               style={{ width: "100%" }}
             />
           </div>
@@ -46,14 +95,23 @@ export default function SettingsCard() {
             </label>
             <input
               id="sessionsBeforeLong"
-              type="number"
-              min="1"
-              defaultValue="4"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={draft.sessionsBeforeLong}
+              onChange={updateField("sessionsBeforeLong")}
+              style={{ width: "30%" }}
             />
           </div>
 
           <div className="col-4">
-            <button type="button" className="button">
+            <button
+              type="button"
+              className="button"
+              onClick={() => {
+                setDraft(defaults);
+              }}
+            >
               Restore Defaults
             </button>
           </div>

@@ -1,4 +1,4 @@
-export default function PomodoroCard() {
+export default function PomodoroCard({ settings }) {
   return (
     <section
       className="main special"
@@ -38,7 +38,7 @@ export default function PomodoroCard() {
         style={{ marginTop: 15, gap: 12, flexWrap: "wrap" }}
       >
         <li>
-          <button type="button" className="button primary icon solid fa-play">
+          <button type="button" className="button icon solid fa-play">
             Start
           </button>
         </li>

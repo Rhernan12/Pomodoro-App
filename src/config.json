@@ -1,0 +1,6 @@
+{
+  "defaultFocusMinutes": 25,
+  "defaultShortBreakMinutes": 5,
+  "defaultLongBreakMinutes": 15,
+  "defaultSessionsBeforeLong": 3
+}

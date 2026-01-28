@@ -31,13 +31,12 @@ export default function PomodoroCard({ settings }) {
   };
 
   const resetTimer = () => {
-    deadlineRef.current = getNewDeadTime(settings[currentMode] * 60);
-    pausedAtRef.current = null;
-
-    timerTick(deadlineRef.current); // update UI
-
     clearIntervalSafe();
-    pause();
+    setIsRunning(false);
+
+    deadlineRef.current = getNewDeadTime(settings[currentMode] * 60);
+    pausedAtRef.current = Date.now(); // important
+    timerTick(deadlineRef.current);
   };
 
   const start = () => {
@@ -60,11 +59,9 @@ export default function PomodoroCard({ settings }) {
     setIsRunning(false);
   };
 
-  // If total time changes while stopped, refresh the display
+  // If total time changes, refresh the display
   useEffect(() => {
-    if (!isRunning) {
-      resetTimer();
-    }
+    resetTimer();
   }, [settings[currentMode]]);
 
   useEffect(() => {

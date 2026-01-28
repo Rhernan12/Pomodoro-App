@@ -1,4 +1,92 @@
+import { useState, useRef, useEffect } from "react";
+import { formatTime, getNewDeadTime } from "../utils";
+
 export default function PomodoroCard({ settings }) {
+  const intervalRef = useRef(null);
+  const deadlineRef = useRef(null);
+  const pausedAtRef = useRef(null);
+
+  const [isRunning, setIsRunning] = useState(false);
+  const [timer, setTimer] = useState(null); // this is a display string
+  const [currentMode, setCurrentMode] = useState("focusMinutes"); // Placeholder
+
+  const clearIntervalSafe = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const timerTick = (deadline) => {
+    const total = Date.parse(deadline) - Date.now();
+
+    if (total >= 0) {
+      setTimer(formatTime(total));
+    } else {
+      // timer is done
+      setTimer(formatTime(0));
+      clearIntervalSafe();
+      setIsRunning(false);
+    }
+  };
+
+  const resetTimer = () => {
+    deadlineRef.current = getNewDeadTime(settings[currentMode] * 60);
+    pausedAtRef.current = null;
+
+    timerTick(deadlineRef.current); // update UI
+
+    clearIntervalSafe();
+    pause();
+  };
+
+  const start = () => {
+    // Push deadline forward by paused duration
+    if (pausedAtRef.current) {
+      const pausedDurationMs = Date.now() - pausedAtRef.current;
+      deadlineRef.current = new Date(
+        Date.parse(deadlineRef.current) + pausedDurationMs,
+      );
+      pausedAtRef.current = null;
+    }
+
+    setIsRunning(true);
+  };
+
+  const pause = () => {
+    if (!isRunning) return;
+    // record when user pauses
+    pausedAtRef.current = Date.now();
+    setIsRunning(false);
+  };
+
+  // If total time changes while stopped, refresh the display
+  useEffect(() => {
+    if (!isRunning) {
+      resetTimer();
+    }
+  }, [settings[currentMode]]);
+
+  useEffect(() => {
+    clearIntervalSafe();
+
+    if (!isRunning) {
+      return;
+    }
+
+    const deadline = deadlineRef.current;
+
+    timerTick(deadline); // update UI to avoid 1 second delay
+
+    intervalRef.current = setInterval(
+      () => timerTick(deadlineRef.current),
+      1000,
+    );
+
+    // cleanup on pause/unmount
+    return () => clearIntervalSafe();
+  }, [isRunning]);
+
   return (
     <section
       className="main special"
@@ -29,7 +117,7 @@ export default function PomodoroCard({ settings }) {
 
       {/* Time display */}
       <div style={{ marginTop: 15 }}>
-        <h1 style={{ marginBottom: 0, letterSpacing: 2 }}>25:00</h1>
+        <h1 style={{ marginBottom: 0, letterSpacing: 2 }}>{timer}</h1>
       </div>
 
       {/* Controls */}
@@ -38,17 +126,29 @@ export default function PomodoroCard({ settings }) {
         style={{ marginTop: 15, gap: 12, flexWrap: "wrap" }}
       >
         <li>
-          <button type="button" className="button icon solid fa-play">
+          <button
+            onClick={start}
+            type="button"
+            className="button icon solid fa-play"
+          >
             Start
           </button>
         </li>
         <li>
-          <button type="button" className="button icon solid fa-pause">
+          <button
+            onClick={pause}
+            type="button"
+            className="button icon solid fa-pause"
+          >
             Pause
           </button>
         </li>
         <li>
-          <button type="button" className="button icon solid fa-undo-alt">
+          <button
+            onClick={resetTimer}
+            type="button"
+            className="button icon solid fa-undo-alt"
+          >
             Reset
           </button>
         </li>

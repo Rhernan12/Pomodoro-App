@@ -22,7 +22,6 @@ export default function App() {
   const [settings, setSettings] = useState(DEFAULTS);
 
   const onApplySettingsHandler = (newSettings) => {
-    console.log(newSettings);
     setSettings(newSettings);
   };
 

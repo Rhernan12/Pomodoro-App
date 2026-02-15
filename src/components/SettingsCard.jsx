@@ -29,9 +29,11 @@ export default function SettingsCard({ settings, defaults, onApplySettings }) {
       longBreakMinutes,
       sessionsBeforeLong,
     ];
-    // Make sure no value is zero
+    // Prevent bad inputs
     if (!valuesArray.every((value) => value > 0)) {
       alert("Values should be grater than 0.");
+    } else if (!valuesArray.every((value) => value < 720)) {
+      alert("Values should be less than 720 (12 hours).");
     } else {
       onApplySettings({
         focusMinutes: focusMinutes,

@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { formatTime, getNewDeadTime } from "../utils";
 
+const MODES = {
+  FOCUS: "focusMinutes",
+  SHORTBREAK: "shortBreakMinutes",
+  LONGBREAK: "longBreakMinutes",
+};
+
 export default function PomodoroCard({ settings }) {
   const intervalRef = useRef(null);
   const deadlineRef = useRef(null);
@@ -8,7 +14,9 @@ export default function PomodoroCard({ settings }) {
 
   const [isRunning, setIsRunning] = useState(false);
   const [timer, setTimer] = useState(null); // this is a display string
-  const [currentMode, setCurrentMode] = useState("focusMinutes"); // Placeholder
+  const [currentMode, setCurrentMode] = useState(MODES.FOCUS);
+  const [focusSessionsCompleted, setFocusSessionsCompleted] = useState(0);
+  const [breaksCompleted, setBreaksCompleted] = useState(0);
 
   const clearIntervalSafe = () => {
     if (intervalRef.current) {
@@ -22,11 +30,23 @@ export default function PomodoroCard({ settings }) {
 
     if (total >= 0) {
       setTimer(formatTime(total));
+      return;
+    }
+
+    // timer is done
+    if (currentMode === MODES.FOCUS) {
+      setFocusSessionsCompleted((prev) => {
+        const next = prev + 1;
+        if (next % settings.sessionsBeforeLong === 0) {
+          switchMode(MODES.LONGBREAK);
+        } else {
+          switchMode(MODES.SHORTBREAK);
+        }
+        return next;
+      });
     } else {
-      // timer is done
-      setTimer(formatTime(0));
-      clearIntervalSafe();
-      setIsRunning(false);
+      setBreaksCompleted((prev) => prev + 1);
+      switchMode(MODES.FOCUS);
     }
   };
 
@@ -35,7 +55,7 @@ export default function PomodoroCard({ settings }) {
     setIsRunning(false);
 
     deadlineRef.current = getNewDeadTime(settings[currentMode] * 60);
-    pausedAtRef.current = Date.now(); // important
+    pausedAtRef.current = Date.now();
     timerTick(deadlineRef.current);
   };
 
@@ -52,6 +72,13 @@ export default function PomodoroCard({ settings }) {
     setIsRunning(true);
   };
 
+  const switchMode = (mode) => {
+    clearIntervalSafe();
+    setIsRunning(false);
+    pausedAtRef.current = Date.now();
+    setCurrentMode(mode);
+  };
+
   const pause = () => {
     if (!isRunning) return;
     // record when user pauses
@@ -62,7 +89,7 @@ export default function PomodoroCard({ settings }) {
   // If total time changes, refresh the display
   useEffect(() => {
     resetTimer();
-  }, [settings[currentMode]]);
+  }, [currentMode, settings]);
 
   useEffect(() => {
     clearIntervalSafe();
@@ -96,17 +123,29 @@ export default function PomodoroCard({ settings }) {
 
       <ul className="actions special" style={{ gap: 12, flexWrap: "wrap" }}>
         <li>
-          <button type="button" className="button primary">
+          <button
+            onClick={() => switchMode(MODES.FOCUS)}
+            type="button"
+            className={`button ${currentMode === MODES.FOCUS ? "primary" : ""}`}
+          >
             Focus
           </button>
         </li>
         <li>
-          <button type="button" className="button">
+          <button
+            onClick={() => switchMode(MODES.SHORTBREAK)}
+            type="button"
+            className={`button ${currentMode === MODES.SHORTBREAK ? "primary" : ""}`}
+          >
             Short Break
           </button>
         </li>
         <li>
-          <button type="button" className="button">
+          <button
+            onClick={() => switchMode(MODES.LONGBREAK)}
+            type="button"
+            className={`button ${currentMode === MODES.LONGBREAK ? "primary" : ""}`}
+          >
             Long Break
           </button>
         </li>
@@ -155,15 +194,11 @@ export default function PomodoroCard({ settings }) {
       <ul className="statistics" style={{ marginTop: 34 }}>
         <li className="style1">
           <span className="icon solid fa-bolt" />
-          <strong>0</strong> Focus Sessions
-        </li>
-        <li className="style2">
-          <span className="icon solid fa-clock" />
-          <strong>0m</strong> Focus Time
+          <strong>{focusSessionsCompleted}</strong> Focus Sessions
         </li>
         <li className="style3">
           <span className="icon solid fa-mug-hot" />
-          <strong>0</strong> Breaks
+          <strong>{breaksCompleted}</strong> Breaks
         </li>
       </ul>
     </section>

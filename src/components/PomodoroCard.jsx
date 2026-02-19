@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { formatTime, getNewDeadTime } from "../utils";
+import {
+  formatTime,
+  getNewDeadTime,
+  requestNotificationPermission,
+  notify,
+} from "../utils";
 
+import alarmBeep from "../assets/alarm.mp3";
+import restIcon from "../assets/restIcon.png";
+import focusIcon from "../assets/focusIcon.jpg";
+
+const alarm = new Audio(alarmBeep);
 const MODES = {
   FOCUS: "focusMinutes",
   SHORTBREAK: "shortBreakMinutes",
@@ -11,6 +21,8 @@ export default function PomodoroCard({ settings }) {
   const intervalRef = useRef(null);
   const deadlineRef = useRef(null);
   const pausedAtRef = useRef(null);
+  const autoStartRef = useRef(false);
+  const notificationPermissionGiven = useRef(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [timer, setTimer] = useState(null); // this is a display string
@@ -34,17 +46,21 @@ export default function PomodoroCard({ settings }) {
     }
 
     // timer is done
+    alarm.play();
+    autoStartRef.current = true;
     if (currentMode === MODES.FOCUS) {
-      setFocusSessionsCompleted((prev) => {
-        const next = prev + 1;
-        if (next % settings.sessionsBeforeLong === 0) {
-          switchMode(MODES.LONGBREAK);
-        } else {
-          switchMode(MODES.SHORTBREAK);
-        }
-        return next;
-      });
+      notify("Finished focus period", "Enjoy your break!", restIcon);
+
+      const nextFocusSessionsCompleted = focusSessionsCompleted + 1;
+      setFocusSessionsCompleted(nextFocusSessionsCompleted);
+
+      if (nextFocusSessionsCompleted % settings.sessionsBeforeLong === 0) {
+        switchMode(MODES.LONGBREAK);
+      } else {
+        switchMode(MODES.SHORTBREAK);
+      }
     } else {
+      notify("Finished rest period", "Time to focus!", focusIcon);
       setBreaksCompleted((prev) => prev + 1);
       switchMode(MODES.FOCUS);
     }
@@ -52,14 +68,20 @@ export default function PomodoroCard({ settings }) {
 
   const resetTimer = () => {
     clearIntervalSafe();
-    setIsRunning(false);
+    setIsRunning(autoStartRef.current);
 
     deadlineRef.current = getNewDeadTime(settings[currentMode] * 60);
     pausedAtRef.current = Date.now();
     timerTick(deadlineRef.current);
   };
 
-  const start = () => {
+  const start = async () => {
+    // Ask for notification permission if not given
+    if (!notificationPermissionGiven.current) {
+      notificationPermissionGiven.current =
+        await requestNotificationPermission();
+    }
+
     // Push deadline forward by paused duration
     if (pausedAtRef.current) {
       const pausedDurationMs = Date.now() - pausedAtRef.current;
@@ -73,8 +95,9 @@ export default function PomodoroCard({ settings }) {
   };
 
   const switchMode = (mode) => {
+    console.log(autoStartRef.current);
     clearIntervalSafe();
-    setIsRunning(false);
+    setIsRunning(autoStartRef.current);
     pausedAtRef.current = Date.now();
     setCurrentMode(mode);
   };
@@ -109,7 +132,7 @@ export default function PomodoroCard({ settings }) {
 
     // cleanup on pause/unmount
     return () => clearIntervalSafe();
-  }, [isRunning]);
+  }, [isRunning, currentMode]);
 
   return (
     <section
@@ -181,7 +204,10 @@ export default function PomodoroCard({ settings }) {
         </li>
         <li>
           <button
-            onClick={resetTimer}
+            onClick={() => {
+              autoStartRef.current = false;
+              resetTimer();
+            }}
             type="button"
             className="button icon solid fa-undo-alt"
           >

@@ -19,3 +19,23 @@ export function formatTime(totalMs) {
     return `${pad(minutes)}:${pad(seconds)}`;
   }
 }
+
+// returns true when permission is granted, false otherwise
+export async function requestNotificationPermission() {
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
+
+  // if we have no user response yet
+  const permissionStatus = await Notification.requestPermission();
+  return permissionStatus === "granted";
+}
+
+export function notify(title, body, icon) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: icon,
+    });
+  }
+}

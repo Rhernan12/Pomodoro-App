@@ -1,7 +1,5 @@
-export function getNewDeadTime(durationSeconds) {
-  let deadline = new Date();
-  deadline.setSeconds(deadline.getSeconds() + durationSeconds);
-  return deadline;
+export function getNewDeadTime(durationMinutes, baseMs = Date.now()) {
+  return new Date(baseMs + durationMinutes * 60 * 1000);
 }
 
 export function formatTime(totalMs) {

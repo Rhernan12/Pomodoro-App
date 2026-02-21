@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function SettingsCard({ settings, defaults, onApplySettings }) {
   const [draft, setDraft] = useState(settings);
-
-  useEffect(() => setDraft(settings), [settings]); // Just in case more functionality is added later
 
   const updateField = (key) => {
     return (e) => {

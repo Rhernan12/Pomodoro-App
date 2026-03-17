@@ -247,6 +247,7 @@ export function usePomodoroTimer({ settings, alarmSrc, restIcon, focusIcon }) {
     display,
     focusSessionsCompleted: state.focusSessionsCompleted,
     breaksCompleted: state.breaksCompleted,
+    isRunning: state.isRunning,
     actions: {
       start,
       pause,

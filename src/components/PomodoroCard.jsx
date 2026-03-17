@@ -10,6 +10,7 @@ export default function PomodoroCard({ settings }) {
     display,
     focusSessionsCompleted,
     breaksCompleted,
+    isRunning,
     actions,
   } = usePomodoroTimer({ settings, alarmSrc: alarmBeep, restIcon, focusIcon });
 
@@ -74,20 +75,15 @@ export default function PomodoroCard({ settings }) {
       >
         <li>
           <button
-            onClick={actions.start}
+            onClick={() => (isRunning ? actions.pause() : actions.start())}
             type="button"
-            className="button icon solid fa-play"
+            className={
+              isRunning
+                ? "button icon solid fa-pause"
+                : "button icon solid fa-play"
+            }
           >
-            Start
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={actions.pause}
-            type="button"
-            className="button icon solid fa-pause"
-          >
-            Pause
+            {isRunning ? "Pause" : "Start"}
           </button>
         </li>
         <li>
